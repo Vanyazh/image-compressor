@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片压缩工具</title>
+    <!-- 使用内联的base64编码图标，避免404错误 -->
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMTVIMTNWOUgxNkwxMiA0TDggOUgxMVYxNVoiIGZpbGw9IiM0Mjg1RjQiLz48cGF0aCBkPSJNMjAgMThINFY4SDBWMThDMCAxOS4xIDAuOSAyMCAyIDIwSDE4QzE5LjEgMjAgMjAgMTkuMSAyMCAxOFYxNEgxNlYxOEgyMFoiIGZpbGw9IiM0Mjg1RjQiLz48L3N2Zz4=" type="image/svg+xml">
+    
+    <!-- 内联CSS样式，替代外部CSS文件 -->
+    <style>
+        /* 基本样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1d1d1f;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #86868b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 上传区域样式 */
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 2px dashed #d2d2d7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 300px;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0071e3;
+            background-color: rgba(0, 113, 227, 0.05);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+        }
+
+        .upload-area p {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .upload-area .highlight {
+            color: #0071e3;
+            font-weight: 500;
+        }
+
+        .upload-area .small {
+            font-size: 0.9rem;
+            color: #86868b;
+        }
+
+        /* 图片处理区域样式 */
+        .image-processing {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .comparison-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .image-card {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .image-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f5f5f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-info {
+            background-color: #f5f5f7;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .image-info p {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* 控制区域样式 */
+        .controls {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #d2d2d7;
+        }
+
+        .quality-control {
+            margin-bottom: 30px;
+        }
+
+        .quality-control label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .quality-control input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #d2d2d7;
+        }
+
+        .quality-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0071e3;
+            cursor: pointer;
+        }
+
+        .quality-control input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 50%;
+            background: #0071e3;
+            cursor: pointer;
+        }
+
+        .quality-hint {
+            font-size: 0.9rem;
+            color: #86868b;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .primary-btn, .secondary-btn, .tertiary-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .primary-btn {
+            background-color: #0071e3;
+            color: white;
+        }
+
+        .primary-btn:hover {
+            background-color: #0077ed;
+        }
+
+        .secondary-btn {
+            background-color: #e8e8ed;
+            color: #1d1d1f;
+        }
+
+        .secondary-btn:hover {
+            background-color: #d2d2d7;
+        }
+
+        .tertiary-btn {
+            background-color: transparent;
+            color: #0071e3;
+        }
+
+        .tertiary-btn:hover {
+            text-decoration: underline;
+        }
+
+        .primary-btn:disabled, .secondary-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 加载指示器 */
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0071e3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            header p {
+                font-size: 1rem;
+            }
+            
+            .upload-area {
+                padding: 30px;
+            }
+            
+            .image-processing {
+                padding: 20px;
+            }
+            
+            .comparison-container {
+                flex-direction: column;
+            }
+            
+            .image-card {
+                min-width: 100%;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .primary-btn, .secondary-btn, .tertiary-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>图片压缩工具</h1>
+            <p>上传图片，调整压缩比例，减小文件大小</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMTVIMTNWOUgxNkwxMiA0TDggOUgxMVYxNVoiIGZpbGw9IiM5OTk5OTkiLz48cGF0aCBkPSJNMjAgMThINFY4SDBWMThDMCAxOS4xIDAuOSAyMCAyIDIwSDE4QzE5LjEgMjAgMjAgMTkuMSAyMCAxOFYxNEgxNlYxOEgyMFoiIGZpbGw9IiM5OTk5OTkiLz48L3N2Zz4=" alt="上传图标" class="upload-icon">
+                    <p>拖放图片到此处或<span class="highlight">点击上传</span></p>
+                    <p class="small">支持 PNG、JPG 等格式</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+            </div>
+
+            <div class="image-processing" id="imageProcessing" style="display: none;">
+                <div class="comparison-container">
+                    <div class="image-card">
+                        <h3>原始图片</h3>
+                        <div class="image-preview">
+                            <img id="originalImage" src="" alt="原始图片">
+                        </div>
+                        <div class="image-info">
+                            <p>文件大小: <span id="originalSize">0 KB</span></p>
+                            <p>尺寸: <span id="originalDimensions">0 x 0</span></p>
+                        </div>
+                    </div>
+
+                    <div class="image-card">
+                        <h3>压缩后图片</h3>
+                        <div class="image-preview">
+                            <img id="compressedImage" src="" alt="压缩后图片">
+                        </div>
+                        <div class="image-info">
+                            <p>文件大小: <span id="compressedSize">0 KB</span></p>
+                            <p>尺寸: <span id="compressedDimensions">0 x 0</span></p>
+                            <p>压缩率: <span id="compressionRatio">0%</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="quality-control">
+                        <label for="singleQualitySlider">压缩质量: <span id="singleQualityValue">60%</span></label>
+                        <input type="range" id="singleQualitySlider" min="1" max="100" value="60">
+                        <p class="quality-hint">较低的值会产生更小的文件，但可能降低图像质量</p>
+                    </div>
+                    
+                    <div class="buttons">
+                        <button id="compressBtn" class="primary-btn">压缩图片</button>
+                        <button id="downloadBtn" class="secondary-btn" disabled>下载图片</button>
+                        <button id="resetBtn" class="tertiary-btn">重新上传</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <!-- 调试代码 -->
+    <script>
+        // 添加全局错误处理
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("全局错误:", message, "在", source, "行:", lineno, "列:", colno, "错误对象:", error);
+            
+            // 显示详细错误信息
+            let errorDetails = "错误: " + message;
+            if (source) errorDetails += "\n来源: " + source;
+            if (lineno) errorDetails += "\n行: " + lineno;
+            if (error && error.stack) errorDetails += "\n堆栈: " + error.stack;
+            
+            alert(errorDetails);
+            return true;
+        };
+        
+        // 监听未捕获的Promise错误
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('未处理的Promise错误:', event.reason);
+            alert("Promise错误: " + (event.reason ? event.reason.message || event.reason : "未知错误"));
+        });
+        
+        // 检查浏览器支持
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查Canvas支持
+            if (!document.createElement('canvas').getContext) {
+                alert("您的浏览器不支持Canvas，无法使用图片压缩功能。请使用现代浏览器如Chrome、Firefox、Edge或Safari。");
+            }
+            
+            // 检查Blob支持
+            if (typeof Blob === 'undefined') {
+                alert("您的浏览器不支持Blob，无法使用图片压缩功能。请使用现代浏览器如Chrome、Firefox、Edge或Safari。");
+            }
+            
+            // 检查URL.createObjectURL支持
+            if (typeof URL === 'undefined' || typeof URL.createObjectURL === 'undefined') {
+                alert("您的浏览器不支持URL.createObjectURL，无法使用图片压缩功能。请使用现代浏览器如Chrome、Firefox、Edge或Safari。");
+            }
+            
+            console.log("浏览器兼容性检查完成");
+        });
+    </script>
+</body>
+</html> 
