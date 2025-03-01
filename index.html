@@ -741,5 +741,20 @@
             console.log("浏览器兼容性检查完成");
         });
     </script>
+
+    <!-- 添加Service Worker支持 -->
+<script>
+// 检查浏览器是否支持Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        // 注册Service Worker
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+            console.log('Service Worker 注册成功，范围:', registration.scope);
+        }).catch(function(error) {
+            console.log('Service Worker 注册失败:', error);
+        });
+    });
+}
+</script>
 </body>
 </html> 
