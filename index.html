@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图片压缩工具</title>
-    <!-- 使用内联的base64编码图标，避免404错误 -->
-    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMTVIMTNWOUgxNkwxMiA0TDggOUgxMVYxNVoiIGZpbGw9IiM0Mjg1RjQiLz48cGF0aCBkPSJNMjAgMThINFY4SDBWMThDMCAxOS4xIDAuOSAyMCAyIDIwSDE4QzE5LjEgMjAgMjAgMTkuMSAyMCAxOFYxNEgxNlYxOEgyMFoiIGZpbGw9IiM0Mjg1RjQiLz48L3N2Zz4=" type="image/svg+xml">
+    <!-- 使用Base64编码的图标，避免编码问题 -->
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAFdQTFRFAAAA7e3t7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u////xbPHRQAAAAx0Uk5TAAIGCQwVHjFFWWqDrDkYmQAAAAFiS0dEDfa0YfUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAADDSURBVDjLnZPZEoMgDEWBsMiiVm3r8v9/2UQdcHQc2zwQT3ITEgj5H0JYEFJKhRDGmNZaKSml1lpKKYQAQPmglGLOOWPMWgvnHGMMpRRjDEqptRZjDGMMxhiUUmvtOI7jOPZ9P89z3/d933dd13Vd27Zt27Zt2zRN0zR1XVdVVVVVWZZlWRZFURRFnud5nud5nqZpHMdxHMdxHMdxHIdhGIZhGIZhGIZh6Pu+7/u+7/u+bduu67qu67qu67qu67qu67qu67rOOQfnHJxzALgBJHgdGJDKXU0AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjQtMDUtMjNUMDg6MzU6MzUrMDA6MDCjlq7LAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDI0LTA1LTIzVDA4OjM1OjM1KzAwOjAw0ssWdwAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyNC0wNS0yM1QwODozNTozNSswMDowMIXeN6gAAAAASUVORK5CYII=" type="image/png">
     
     <!-- 内联CSS样式，替代外部CSS文件 -->
     <style>
@@ -369,6 +369,15 @@
                         <p class="quality-hint">较低的值会产生更小的文件，但可能降低图像质量</p>
                     </div>
                     
+                    <!-- 添加保持原尺寸选项 -->
+                    <div class="maintain-size-option" style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="maintainSizeCheckbox" style="margin-right: 8px;">
+                            <span>保持原始尺寸</span>
+                        </label>
+                        <p class="quality-hint">选中此项将保持图片原始尺寸，不进行缩放</p>
+                    </div>
+                    
                     <div class="buttons">
                         <button id="compressBtn" class="primary-btn">压缩图片</button>
                         <button id="downloadBtn" class="secondary-btn" disabled>下载图片</button>
@@ -379,325 +388,334 @@
         </main>
     </div>
 
-   <script>
-   // 图片压缩工具 JavaScript
-   document.addEventListener('DOMContentLoaded', function() {
-       // 获取DOM元素
-       const uploadArea = document.getElementById('uploadArea');
-       const fileInput = document.getElementById('fileInput');
-       const imageProcessing = document.getElementById('imageProcessing');
-       const originalImage = document.getElementById('originalImage');
-       const compressedImage = document.getElementById('compressedImage');
-       const originalSize = document.getElementById('originalSize');
-       const compressedSize = document.getElementById('compressedSize');
-       const originalDimensions = document.getElementById('originalDimensions');
-       const compressedDimensions = document.getElementById('compressedDimensions');
-       const compressionRatio = document.getElementById('compressionRatio');
-       const singleQualitySlider = document.getElementById('singleQualitySlider');
-       const singleQualityValue = document.getElementById('singleQualityValue');
-       const compressBtn = document.getElementById('compressBtn');
-       const downloadBtn = document.getElementById('downloadBtn');
-       const resetBtn = document.getElementById('resetBtn');
-       
-       // 存储图片数据
-       let currentFile = null;
-       let compressedBlob = null;
-       
-       // 添加加载指示器
-       const loadingIndicator = document.createElement('div');
-       loadingIndicator.className = 'loading-indicator';
-       loadingIndicator.innerHTML = '<div class="spinner"></div><p>处理中，请稍候...</p>';
-       loadingIndicator.style.display = 'none';
-       document.body.appendChild(loadingIndicator);
-   
-       // 上传区域点击事件
-       uploadArea.addEventListener('click', function() {
-           fileInput.click();
-       });
-   
-       // 文件选择事件
-       fileInput.addEventListener('change', function(e) {
-           if (e.target.files.length) {
-               handleFile(e.target.files[0]);
-           }
-       });
-   
-       // 拖放功能
-       uploadArea.addEventListener('dragover', function(e) {
-           e.preventDefault();
-           uploadArea.classList.add('dragover');
-       });
-   
-       uploadArea.addEventListener('dragleave', function() {
-           uploadArea.classList.remove('dragover');
-       });
-   
-       uploadArea.addEventListener('drop', function(e) {
-           e.preventDefault();
-           uploadArea.classList.remove('dragover');
-           
-           if (e.dataTransfer.files.length) {
-               handleFile(e.dataTransfer.files[0]);
-           }
-       });
-   
-       // 质量滑块事件
-       singleQualitySlider.addEventListener('input', function() {
-           singleQualityValue.textContent = `${singleQualitySlider.value}%`;
-       });
-   
-       // 压缩按钮事件
-       compressBtn.addEventListener('click', function() {
-           if (currentFile) {
-               compressImage();
-           }
-       });
-   
-       // 下载按钮事件
-       downloadBtn.addEventListener('click', function() {
-           if (compressedBlob) {
-               const fileName = `${currentFile.name.split('.')[0]}_compressed.jpg`;
-               downloadImage(compressedBlob, fileName);
-           }
-       });
-   
-       // 重置按钮事件
-       resetBtn.addEventListener('click', resetApp);
-       
-       /**
-        * 处理单个文件
-        * @param {File} file - 用户上传的文件
-        */
-       function handleFile(file) {
-           // 检查是否为图片
-           if (!file.type.match('image.*')) {
-               alert('请上传图片文件！');
-               return;
-           }
-           
-           // 检查文件大小
-           if (file.size > 15 * 1024 * 1024) { // 15MB
-               alert('文件过大，请上传小于15MB的图片');
-               return;
-           }
-   
-           // 重置应用状态
-           resetApp();
-           
-           // 存储文件
-           currentFile = file;
-           
-           // 显示原始图片
-           displayOriginalImage();
-       }
-       
-       /**
-        * 显示原始图片
-        */
-       function displayOriginalImage() {
-           // 显示加载指示器
-           loadingIndicator.style.display = 'flex';
-           
-           // 创建文件读取器
-           const reader = new FileReader();
-           
-           reader.onload = function(e) {
-               // 显示原始图片信息
-               originalSize.textContent = formatFileSize(currentFile.size);
-               
-               // 设置预览图片
-               originalImage.onload = function() {
-                   originalDimensions.textContent = `${this.naturalWidth} x ${this.naturalHeight}`;
-                   
-                   // 隐藏加载指示器
-                   loadingIndicator.style.display = 'none';
-                   
-                   // 显示图片处理界面
-                   uploadArea.parentElement.style.display = 'none';
-                   imageProcessing.style.display = 'block';
-               };
-               
-               originalImage.onerror = function() {
-                   alert('无法加载图片，请尝试其他图片。');
-                   loadingIndicator.style.display = 'none';
-                   resetApp();
-               };
-               
-               originalImage.src = e.target.result;
-           };
-           
-           reader.onerror = function() {
-               alert('文件读取失败，请尝试其他图片。');
-               loadingIndicator.style.display = 'none';
-               resetApp();
-           };
-           
-           // 读取文件为数据URL
-           reader.readAsDataURL(currentFile);
-       }
-       
-       /**
-        * 压缩图片
-        */
-       function compressImage() {
-           if (!currentFile) {
-               return;
-           }
-           
-           const quality = parseInt(singleQualitySlider.value) / 100;
-           
-           // 显示加载指示器
-           loadingIndicator.style.display = 'flex';
-           
-           // 创建文件读取器
-           const reader = new FileReader();
-           
-           reader.onload = function(e) {
-               const img = new Image();
-               
-               img.onload = function() {
-                   // 创建Canvas
-                   const canvas = document.createElement('canvas');
-                   const ctx = canvas.getContext('2d');
-                   
-                   // 设置Canvas尺寸
-                   let width = img.width;
-                   let height = img.height;
-                   
-                   // 如果图片太大，进行缩小
-                   const maxDimension = 1200;
-                   if (width > maxDimension || height > maxDimension) {
-                       if (width > height) {
-                           height = Math.round(height * (maxDimension / width));
-                           width = maxDimension;
-                       } else {
-                           width = Math.round(width * (maxDimension / height));
-                           height = maxDimension;
-                       }
-                   }
-                   
-                   canvas.width = width;
-                   canvas.height = height;
-                   
-                   // 绘制图像
-                   ctx.fillStyle = '#FFFFFF';
-                   ctx.fillRect(0, 0, width, height);
-                   ctx.drawImage(img, 0, 0, width, height);
-                   
-                   // 转换为JPEG格式
-                   canvas.toBlob(function(blob) {
-                       if (!blob) {
-                           alert('压缩失败，请尝试其他图片或调整压缩质量。');
-                           loadingIndicator.style.display = 'none';
-                           return;
-                       }
-                       
-                       // 更新压缩后的图片信息
-                       compressedBlob = blob;
-                       const blobUrl = URL.createObjectURL(blob);
-                       
-                       compressedImage.onload = function() {
-                           // 隐藏加载指示器
-                           loadingIndicator.style.display = 'none';
-                       };
-                       
-                       compressedImage.onerror = function() {
-                           alert('压缩后的图片无法显示，但您仍可以下载。');
-                           loadingIndicator.style.display = 'none';
-                       };
-                       
-                       compressedImage.src = blobUrl;
-                       compressedSize.textContent = formatFileSize(blob.size);
-                       compressedDimensions.textContent = `${width} x ${height}`;
-                       
-                       // 计算压缩率
-                       const ratio = ((currentFile.size - blob.size) / currentFile.size) * 100;
-                       compressionRatio.textContent = `${ratio.toFixed(1)}%`;
-                       
-                       // 启用下载按钮
-                       downloadBtn.disabled = false;
-                   }, 'image/jpeg', quality);
-               };
-               
-               img.onerror = function() {
-                   alert('图片加载失败，请尝试其他图片。');
-                   loadingIndicator.style.display = 'none';
-               };
-               
-               img.src = e.target.result;
-           };
-           
-           reader.onerror = function() {
-               alert('文件读取失败，请尝试其他图片。');
-               loadingIndicator.style.display = 'none';
-           };
-           
-           // 读取文件为数据URL
-           reader.readAsDataURL(currentFile);
-       }
-       
-       /**
-        * 下载单个图片
-        * @param {Blob} blob - 要下载的图片Blob
-        * @param {string} fileName - 下载的文件名
-        */
-       function downloadImage(blob, fileName) {
-           const url = URL.createObjectURL(blob);
-           const a = document.createElement('a');
-           a.href = url;
-           a.download = fileName;
-           document.body.appendChild(a);
-           a.click();
-           document.body.removeChild(a);
-           URL.revokeObjectURL(url);
-       }
-       
-       /**
-        * 格式化文件大小
-        * @param {number} bytes - 文件大小（字节）
-        * @returns {string} 格式化后的文件大小
-        */
-       function formatFileSize(bytes) {
-           if (bytes === 0) return '0 Bytes';
-           
-           const k = 1024;
-           const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-           const i = Math.floor(Math.log(bytes) / Math.log(k));
-           
-           return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-       }
-       
-       /**
-        * 重置应用
-        */
-       function resetApp() {
-           // 清空图片数据
-           currentFile = null;
-           compressedBlob = null;
-           
-           // 重置UI
-           uploadArea.parentElement.style.display = 'block';
-           imageProcessing.style.display = 'none';
-           
-           // 清空图片预览
-           originalImage.src = '';
-           compressedImage.src = '';
-           
-           // 重置信息显示
-           originalSize.textContent = '0 KB';
-           compressedSize.textContent = '0 KB';
-           originalDimensions.textContent = '0 x 0';
-           compressedDimensions.textContent = '0 x 0';
-           compressionRatio.textContent = '0%';
-           
-           // 禁用下载按钮
-           downloadBtn.disabled = true;
-       }
-       
-       // 初始化质量滑块
-       singleQualityValue.textContent = `${singleQualitySlider.value}%`;
-   });
-   </script>
+    <script>
+    // 图片压缩工具 JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imageProcessing = document.getElementById('imageProcessing');
+        const originalImage = document.getElementById('originalImage');
+        const compressedImage = document.getElementById('compressedImage');
+        const originalSize = document.getElementById('originalSize');
+        const compressedSize = document.getElementById('compressedSize');
+        const originalDimensions = document.getElementById('originalDimensions');
+        const compressedDimensions = document.getElementById('compressedDimensions');
+        const compressionRatio = document.getElementById('compressionRatio');
+        const singleQualitySlider = document.getElementById('singleQualitySlider');
+        const singleQualityValue = document.getElementById('singleQualityValue');
+        const compressBtn = document.getElementById('compressBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const maintainSizeCheckbox = document.getElementById('maintainSizeCheckbox');
+        
+        // 存储图片数据
+        let currentFile = null;
+        let compressedBlob = null;
+        
+        // 添加加载指示器
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading-indicator';
+        loadingIndicator.innerHTML = '<div class="spinner"></div><p>处理中，请稍候...</p>';
+        loadingIndicator.style.display = 'none';
+        document.body.appendChild(loadingIndicator);
+
+        // 上传区域点击事件
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // 文件选择事件
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 拖放功能
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 质量滑块事件
+        singleQualitySlider.addEventListener('input', function() {
+            singleQualityValue.textContent = `${singleQualitySlider.value}%`;
+        });
+
+        // 压缩按钮事件
+        compressBtn.addEventListener('click', function() {
+            if (currentFile) {
+                compressImage();
+            }
+        });
+
+        // 下载按钮事件
+        downloadBtn.addEventListener('click', function() {
+            if (compressedBlob) {
+                const fileName = `${currentFile.name.split('.')[0]}_compressed.jpg`;
+                downloadImage(compressedBlob, fileName);
+            }
+        });
+
+        // 重置按钮事件
+        resetBtn.addEventListener('click', resetApp);
+        
+        /**
+         * 处理单个文件
+         * @param {File} file - 用户上传的文件
+         */
+        function handleFile(file) {
+            // 检查是否为图片
+            if (!file.type.match('image.*')) {
+                alert('请上传图片文件！');
+                return;
+            }
+            
+            // 检查文件大小
+            if (file.size > 15 * 1024 * 1024) { // 15MB
+                alert('文件过大，请上传小于15MB的图片');
+                return;
+            }
+
+            // 重置应用状态
+            resetApp();
+            
+            // 存储文件
+            currentFile = file;
+            
+            // 显示原始图片
+            displayOriginalImage();
+        }
+        
+        /**
+         * 显示原始图片
+         */
+        function displayOriginalImage() {
+            // 显示加载指示器
+            loadingIndicator.style.display = 'flex';
+            
+            // 创建文件读取器
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // 显示原始图片信息
+                originalSize.textContent = formatFileSize(currentFile.size);
+                
+                // 设置预览图片
+                originalImage.onload = function() {
+                    originalDimensions.textContent = `${this.naturalWidth} x ${this.naturalHeight}`;
+                    
+                    // 隐藏加载指示器
+                    loadingIndicator.style.display = 'none';
+                    
+                    // 显示图片处理界面
+                    uploadArea.parentElement.style.display = 'none';
+                    imageProcessing.style.display = 'block';
+                };
+                
+                originalImage.onerror = function() {
+                    alert('无法加载图片，请尝试其他图片。');
+                    loadingIndicator.style.display = 'none';
+                    resetApp();
+                };
+                
+                originalImage.src = e.target.result;
+            };
+            
+            reader.onerror = function() {
+                alert('文件读取失败，请尝试其他图片。');
+                loadingIndicator.style.display = 'none';
+                resetApp();
+            };
+            
+            // 读取文件为数据URL
+            reader.readAsDataURL(currentFile);
+        }
+        
+        /**
+         * 压缩图片
+         */
+        function compressImage() {
+            if (!currentFile) {
+                return;
+            }
+            
+            const quality = parseInt(singleQualitySlider.value) / 100;
+            const maintainOriginalSize = maintainSizeCheckbox.checked;
+            
+            // 显示加载指示器
+            loadingIndicator.style.display = 'flex';
+            
+            // 创建文件读取器
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                
+                img.onload = function() {
+                    // 创建Canvas
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 设置Canvas尺寸
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // 如果不保持原始尺寸且图片太大，进行缩小
+                    const maxDimension = 1200;
+                    if (!maintainOriginalSize && (width > maxDimension || height > maxDimension)) {
+                        if (width > height) {
+                            height = Math.round(height * (maxDimension / width));
+                            width = maxDimension;
+                        } else {
+                            width = Math.round(width * (maxDimension / height));
+                            height = maxDimension;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // 绘制图像
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    try {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 转换为JPEG格式
+                        canvas.toBlob(function(blob) {
+                            if (!blob) {
+                                alert('压缩失败，请尝试其他图片或调整压缩质量。');
+                                loadingIndicator.style.display = 'none';
+                                return;
+                            }
+                            
+                            // 更新压缩后的图片信息
+                            compressedBlob = blob;
+                            const blobUrl = URL.createObjectURL(blob);
+                            
+                            compressedImage.onload = function() {
+                                // 隐藏加载指示器
+                                loadingIndicator.style.display = 'none';
+                            };
+                            
+                            compressedImage.onerror = function() {
+                                alert('压缩后的图片无法显示，但您仍可以下载。');
+                                loadingIndicator.style.display = 'none';
+                            };
+                            
+                            compressedImage.src = blobUrl;
+                            compressedSize.textContent = formatFileSize(blob.size);
+                            compressedDimensions.textContent = `${width} x ${height}`;
+                            
+                            // 计算压缩率
+                            const ratio = ((currentFile.size - blob.size) / currentFile.size) * 100;
+                            compressionRatio.textContent = `${ratio.toFixed(1)}%`;
+                            
+                            // 启用下载按钮
+                            downloadBtn.disabled = false;
+                        }, 'image/jpeg', quality);
+                    } catch (error) {
+                        console.error('绘制图像时出错:', error);
+                        alert('处理图像时出错: ' + error.message);
+                        loadingIndicator.style.display = 'none';
+                    }
+                };
+                
+                img.onerror = function() {
+                    alert('图片加载失败，请尝试其他图片。');
+                    loadingIndicator.style.display = 'none';
+                };
+                
+                img.src = e.target.result;
+            };
+            
+            reader.onerror = function() {
+                alert('文件读取失败，请尝试其他图片。');
+                loadingIndicator.style.display = 'none';
+            };
+            
+            // 读取文件为数据URL
+            reader.readAsDataURL(currentFile);
+        }
+        
+        /**
+         * 下载单个图片
+         * @param {Blob} blob - 要下载的图片Blob
+         * @param {string} fileName - 下载的文件名
+         */
+        function downloadImage(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        /**
+         * 格式化文件大小
+         * @param {number} bytes - 文件大小（字节）
+         * @returns {string} 格式化后的文件大小
+         */
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        /**
+         * 重置应用
+         */
+        function resetApp() {
+            // 清空图片数据
+            currentFile = null;
+            compressedBlob = null;
+            
+            // 重置UI
+            uploadArea.parentElement.style.display = 'block';
+            imageProcessing.style.display = 'none';
+            
+            // 清空图片预览
+            originalImage.src = '';
+            compressedImage.src = '';
+            
+            // 重置信息显示
+            originalSize.textContent = '0 KB';
+            compressedSize.textContent = '0 KB';
+            originalDimensions.textContent = '0 x 0';
+            compressedDimensions.textContent = '0 x 0';
+            compressionRatio.textContent = '0%';
+            
+            // 禁用下载按钮
+            downloadBtn.disabled = true;
+        }
+        
+        // 初始化质量滑块
+        singleQualityValue.textContent = `${singleQualitySlider.value}%`;
+    });
+    </script>
     
     <!-- 调试代码 -->
     <script>
@@ -739,22 +757,177 @@
             }
             
             console.log("浏览器兼容性检查完成");
+            
+            // 添加网络状态监测
+            function updateNetworkStatus() {
+                if (navigator.onLine) {
+                    console.log('网络已连接');
+                    document.body.classList.remove('offline');
+                } else {
+                    console.log('网络已断开');
+                    document.body.classList.add('offline');
+                    // 可以在这里显示离线提示
+                    const offlineMsg = document.createElement('div');
+                    offlineMsg.style.position = 'fixed';
+                    offlineMsg.style.top = '0';
+                    offlineMsg.style.left = '0';
+                    offlineMsg.style.right = '0';
+                    offlineMsg.style.padding = '10px';
+                    offlineMsg.style.backgroundColor = '#f44336';
+                    offlineMsg.style.color = 'white';
+                    offlineMsg.style.textAlign = 'center';
+                    offlineMsg.style.zIndex = '9999';
+                    offlineMsg.textContent = '您当前处于离线状态，但仍可以使用基本功能';
+                    
+                    // 如果页面上没有离线提示，则添加
+                    if (!document.querySelector('.offline-message')) {
+                        offlineMsg.className = 'offline-message';
+                        document.body.appendChild(offlineMsg);
+                    }
+                }
+            }
+            
+            // 初始检查网络状态
+            updateNetworkStatus();
+            
+            // 监听网络状态变化
+            window.addEventListener('online', function() {
+                updateNetworkStatus();
+                // 移除离线提示
+                const offlineMsg = document.querySelector('.offline-message');
+                if (offlineMsg) {
+                    offlineMsg.remove();
+                }
+            });
+            
+            window.addEventListener('offline', updateNetworkStatus);
         });
     </script>
 
-    <!-- 添加Service Worker支持 -->
-<script>
-// 检查浏览器是否支持Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
+    <!-- 改进的Service Worker实现 -->
+    <script>
+    // 改进的Service Worker实现
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // 创建更稳健的Service Worker代码
+        const swCode = `
+          // 缓存名称
+          const CACHE_NAME = 'image-compressor-cache-v2';
+          
+          // 需要缓存的资源
+          const urlsToCache = [
+            './',
+            './index.html'
+          ];
+          
+          // 安装Service Worker
+          self.addEventListener('install', event => {
+            // 立即激活新版本
+            self.skipWaiting();
+            
+            event.waitUntil(
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  console.log('缓存已打开');
+                  return cache.addAll(urlsToCache).catch(error => {
+                    console.error('预缓存资源失败:', error);
+                    // 即使缓存失败也继续安装
+                    return Promise.resolve();
+                  });
+                })
+            );
+          });
+          
+          // 激活Service Worker
+          self.addEventListener('activate', event => {
+            // 立即接管所有客户端
+            event.waitUntil(clients.claim());
+            
+            // 清理旧缓存
+            event.waitUntil(
+              caches.keys().then(cacheNames => {
+                return Promise.all(
+                  cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                      console.log('清除旧缓存:', cacheName);
+                      return caches.delete(cacheName);
+                    }
+                  })
+                );
+              })
+            );
+          });
+          
+          // 拦截请求并从缓存中响应
+          self.addEventListener('fetch', event => {
+            // 仅处理GET请求
+            if (event.request.method !== 'GET') return;
+            
+            // 网络优先策略
+            event.respondWith(
+              fetch(event.request.clone())
+                .then(response => {
+                  // 检查响应是否有效
+                  if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
+                  }
+                  
+                  // 缓存响应
+                  const responseToCache = response.clone();
+                  caches.open(CACHE_NAME)
+                    .then(cache => {
+                      cache.put(event.request, responseToCache);
+                    })
+                    .catch(err => console.error('缓存响应失败:', err));
+                    
+                  return response;
+                })
+                .catch(error => {
+                  console.log('网络请求失败，尝试从缓存获取:', error);
+                  // 网络请求失败时从缓存获取
+                  return caches.match(event.request)
+                    .then(cachedResponse => {
+                      if (cachedResponse) {
+                        return cachedResponse;
+                      }
+                      
+                      // 如果是HTML请求，返回缓存的index.html
+                      if (event.request.headers.get('accept').includes('text/html')) {
+                        return caches.match('./index.html');
+                      }
+                      
+                      // 无法从网络或缓存获取
+                      console.error('无法从网络或缓存获取资源');
+                      return new Response('网络错误，请检查您的连接', {
+                        status: 408,
+                        headers: new Headers({ 'Content-Type': 'text/plain' })
+                      });
+                    });
+                })
+            );
+          });
+          
+          // 处理Service Worker错误
+          self.addEventListener('error', event => {
+            console.error('Service Worker错误:', event.message);
+          });
+        `;
+        
+        // 创建Blob URL
+        const blob = new Blob([swCode], {type: 'text/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        
         // 注册Service Worker
-        navigator.serviceWorker.register('sw.js').then(function(registration) {
-            console.log('Service Worker 注册成功，范围:', registration.scope);
-        }).catch(function(error) {
+        navigator.serviceWorker.register(swUrl)
+          .then(registration => {
+            console.log('Service Worker 注册成功:', registration.scope);
+          })
+          .catch(error => {
             console.log('Service Worker 注册失败:', error);
-        });
-    });
-}
-</script>
+            // Service Worker注册失败时，不影响网站正常使用
+          });
+      });
+    }
+    </script>
 </body>
 </html> 
